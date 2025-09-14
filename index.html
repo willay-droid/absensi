@@ -1,28 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <title>QR Absensi Real-time</title>
+  <meta charset="UTF-8">
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+    #qrcode { margin: 20px auto; }
+    .info { margin-top: 15px; font-size: 18px; }
+  </style>
 </head>
 <body>
-  <h2>QR Absensi</h2>
-  <canvas id="qrcode"></canvas>
-  
-  <script>
-    const execUrl = "https://script.google.com/macros/s/AKfycbxxxx/exec"; // ganti URL GAS
-    const nik = "101"; // contoh NIK karyawan
+  <h2>📌 QR Absensi Real-time</h2>
+  <div id="qrcode"></div>
+  <div class="info" id="info"></div>
 
-    async function updateQR() {
-      const res = await fetch(execUrl + "?tokenInfo=true");
-      // Sebenarnya token bisa langsung dihitung di server, tapi biar simple kita bisa bikin endpoint getCurrentToken()
-      // Di sini anggap kita dapat token langsung
-      const token = "TOKEN_YANG_SAMA_DENGAN_SERVER"; 
-      
-      const qrData = `${execUrl}?token=${token}&type=masuk&nik=${nik}`;
-      QRCode.toCanvas(document.getElementById('qrcode'), qrData);
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/PASTE_DEPLOYMENT_ID/exec";
+
+    function generateToken() {
+      const secret = "RAHASIA123"; // sama dengan di GAS
+      const seconds = Math.floor(Date.now() / 5000);
+      const raw = btoa(secret + seconds);
+      return raw.replace(/[^a-zA-Z0-9]/g, "").substring(0, 8);
     }
 
-    setInterval(updateQR, 5000);
+    function updateQR() {
+      const token = generateToken();
+      const type = "masuk"; // atau "pulang"
+      const url = `${GAS_URL}?type=${type}&token=${token}`;
+
+      document.getElementById("info").innerText =
+        `Token: ${token} | Update: ${new Date().toLocaleTimeString()}`;
+
+      QRCode.toCanvas(document.getElementById("qrcode"), url, { width: 250 }, function (err) {
+        if (err) console.error(err);
+      });
+    }
+
     updateQR();
+    setInterval(updateQR, 5000);
   </script>
 </body>
 </html>
