@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Absensi Sukses</title>
+</head>
+<body>
+  <h2 id="msg"></h2>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const nama = params.get("nama");
+    const unit = params.get("unit");
+    const jam = params.get("jam");
+    const status = params.get("status");
+    const jenis = params.get("jenis");
+
+    document.getElementById("msg").innerText = 
+      `✅ Anda sudah absen ${jenis}\nNama: ${nama}\nUnit: ${unit}\nJam: ${jam}\nStatus: ${status}`;
+  </script>
+</body>
+</html>

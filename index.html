@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+</head>
+<body>
+  <h2>QR Absensi</h2>
+  <canvas id="qrcode"></canvas>
+  
+  <script>
+    const execUrl = "https://script.google.com/macros/s/AKfycbxxxx/exec"; // ganti URL GAS
+    const nik = "101"; // contoh NIK karyawan
+
+    async function updateQR() {
+      const res = await fetch(execUrl + "?tokenInfo=true");
+      // Sebenarnya token bisa langsung dihitung di server, tapi biar simple kita bisa bikin endpoint getCurrentToken()
+      // Di sini anggap kita dapat token langsung
+      const token = "TOKEN_YANG_SAMA_DENGAN_SERVER"; 
+      
+      const qrData = `${execUrl}?token=${token}&type=masuk&nik=${nik}`;
+      QRCode.toCanvas(document.getElementById('qrcode'), qrData);
+    }
+
+    setInterval(updateQR, 5000);
+    updateQR();
+  </script>
+</body>
+</html>
