@@ -1,45 +1,64 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-  <title>QR Absensi Real-time</title>
   <meta charset="UTF-8">
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <title>QR Absensi Real-time</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
-    #qrcode { margin: 20px auto; }
-    .info { margin-top: 15px; font-size: 18px; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    #qrcode {
+      margin: 20px auto;
+      width: 200px;
+      height: 200px;
+    }
+    .info {
+      margin-top: 10px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
   <h2>📌 QR Absensi Real-time</h2>
   <div id="qrcode"></div>
-  <div class="info" id="info"></div>
+  <div class="info" id="tokenInfo"></div>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/PASTE_DEPLOYMENT_ID/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzt6BgDOaKuMpj1Uvz5ZaIzFg8sTUiZ0q2QfACnadrOeK7Y0M866F-E8LTnyLrnk0w/exec";
+    const TYPE = "masuk"; // bisa diganti "pulang" kalau untuk absen pulang
 
-    function generateToken() {
-      const secret = "RAHASIA123"; // sama dengan di GAS
-      const seconds = Math.floor(Date.now() / 5000);
-      const raw = btoa(secret + seconds);
-      return raw.replace(/[^a-zA-Z0-9]/g, "").substring(0, 8);
+    function updateQRCode() {
+      fetch(GAS_URL + "?mode=token")
+        .then(res => res.text())
+        .then(token => {
+          const absensiUrl = `${GAS_URL}?token=${token}&type=${TYPE}`;
+          
+          // render QR
+          document.getElementById("qrcode").innerHTML = "";
+          new QRCode(document.getElementById("qrcode"), {
+            text: absensiUrl,
+            width: 200,
+            height: 200
+          });
+
+          // info token
+          const now = new Date().toLocaleTimeString();
+          document.getElementById("tokenInfo").innerText = 
+            `Token: ${token} | Update: ${now}`;
+        })
+        .catch(err => {
+          console.error("Gagal ambil token", err);
+        });
     }
 
-    function updateQR() {
-      const token = generateToken();
-      const type = "masuk"; // atau "pulang"
-      const url = `${GAS_URL}?type=${type}&token=${token}`;
+    // update pertama kali
+    updateQRCode();
 
-      document.getElementById("info").innerText =
-        `Token: ${token} | Update: ${new Date().toLocaleTimeString()}`;
-
-      QRCode.toCanvas(document.getElementById("qrcode"), url, { width: 250 }, function (err) {
-        if (err) console.error(err);
-      });
-    }
-
-    updateQR();
-    setInterval(updateQR, 5000);
+    // update setiap 5 detik
+    setInterval(updateQRCode, 5000);
   </script>
 </body>
 </html>
