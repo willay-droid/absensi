@@ -3,45 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <title>QR Absensi Real-time</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
-    #qrcode { margin: 20px auto; }
-    .token { font-size: 20px; margin-top: 10px; }
-  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 </head>
 <body>
-  <h2>📌 QR Absensi Real-time</h2>
-  <div id="qrcode"></div>
-  <div class="token">Token: <span id="token"></span></div>
+  <h2>📌 QR Absensi Masuk</h2>
+  <canvas id="qrMasuk"></canvas>
+
+  <h2>📌 QR Absensi Pulang</h2>
+  <canvas id="qrPulang"></canvas>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycb.../exec"; // ganti URL GAS lo
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbznzZHudAPMYwui30ezzqKoLgX6EJo3RgZEWpIFuCl8VTfujL5e_bFt0MBFwGOAGjg3/exec"; 
+    const SECRET = "MySecret2025"; 
 
     function generateToken() {
-      const now = Date.now();
-      const slice = Math.floor(now / 5000); // ganti token tiap 5 detik
-      const base = btoa("MySecret2025" + slice);
-      return base.replace(/[^A-Z0-9]/gi, "").substring(0, 8);
+      const slice = Math.floor(Date.now() / 5000);
+      const raw = btoa(SECRET + slice);
+      return raw.replace(/[^A-Z0-9]/gi, "").substring(0, 8);
     }
 
     function updateQR() {
       const token = generateToken();
-      document.getElementById("token").textContent = token;
+      const masukUrl = `${GAS_URL}?token=${token}&type=masuk`;
+      const pulangUrl = `${GAS_URL}?token=${token}&type=pulang`;
 
-      // hapus QR lama
-      document.getElementById("qrcode").innerHTML = "";
-
-      // buat QR baru (isi link ke GAS + token)
-      new QRCode(document.getElementById("qrcode"), {
-        text: `${GAS_URL}?token=${token}&type=masuk`,
-        width: 200,
-        height: 200
-      });
+      new QRious({ element: document.getElementById("qrMasuk"), value: masukUrl, size: 200 });
+      new QRious({ element: document.getElementById("qrPulang"), value: pulangUrl, size: 200 });
     }
 
+    setInterval(updateQR, 5000); // update setiap 5 detik
     updateQR();
-    setInterval(updateQR, 5000); // update tiap 5 detik
   </script>
 </body>
 </html>
