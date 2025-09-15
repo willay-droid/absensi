@@ -1,22 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Absensi Sukses</title>
+  <title>Absensi Berhasil</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 50px;
+      background: #f9f9f9;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      display: inline-block;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h2 { color: green; }
+    .type { font-size: 18px; margin-top: 10px; }
+  </style>
 </head>
 <body>
-  <h2 id="msg"></h2>
+  <div class="card">
+    <h2>✅ Absensi Berhasil</h2>
+    <p id="info"></p>
+  </div>
 
   <script>
     const params = new URLSearchParams(window.location.search);
-    const nama = params.get("nama");
-    const unit = params.get("unit");
-    const jam = params.get("jam");
-    const status = params.get("status");
-    const jenis = params.get("jenis");
+    const type = params.get("type") || "unknown";
+    const time = params.get("time") || "-";
+    const status = params.get("status") || "Hadir";
 
-    document.getElementById("msg").innerText = 
-      `✅ Anda sudah absen ${jenis}\nNama: ${nama}\nUnit: ${unit}\nJam: ${jam}\nStatus: ${status}`;
+    let jenisText = "";
+    if (type === "masuk") {
+      jenisText = "Anda telah melakukan <b>Absen Masuk</b>";
+    } else if (type === "pulang") {
+      jenisText = "Anda telah melakukan <b>Absen Pulang</b>";
+    } else {
+      jenisText = "Jenis absensi tidak diketahui.";
+    }
+
+    document.getElementById("info").innerHTML = `
+      ${jenisText}<br>
+      Waktu: <b>${time}</b><br>
+      Status: <b>${status}</b>
+    `;
   </script>
 </body>
 </html>
