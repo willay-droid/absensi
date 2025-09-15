@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>QR Absensi Real-time</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+    #qrcode { margin: 20px auto; }
+    #info { margin-top: 10px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h2>📌 QR Absensi Real-time</h2>
+  <div id="qrcode"></div>
+  <div id="info"></div>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycb.../exec";
+    const TYPE = "masuk"; // ganti "pulang" untuk absen pulang
+
+    async function updateQR() {
+      try {
+        const res = await fetch(GAS_URL + "?mode=token");
+        const token = await res.text();
+
+        const absensiUrl = `${GAS_URL}?token=${token}&type=${TYPE}`;
+        
+        // bikin QR baru
+        document.getElementById("qrcode").innerHTML = "";
+        new QRCode(document.getElementById("qrcode"), {
+          text: absensiUrl,
+          width: 200,
+          height: 200
+        });
+
+        document.getElementById("info").innerText =
+          `Token: ${token} | Update: ${new Date().toLocaleTimeString()}`;
+      } catch (err) {
+        console.error("Gagal ambil token", err);
+      }
+    }
+
+    updateQR();
+    setInterval(updateQR, 5000); // update tiap 5 detik
+  </script>
+</body>
+</html>
