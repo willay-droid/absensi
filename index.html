@@ -5,60 +5,44 @@
   <title>QR Absensi Real-time</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin-top: 50px;
-    }
-    #qrcode {
-      margin: 20px auto;
-      width: 200px;
-      height: 200px;
-    }
-    .info {
-      margin-top: 10px;
-      font-size: 16px;
-    }
+    body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+    #qrcode { margin: 20px auto; }
+    #info { margin-top: 10px; font-size: 16px; }
   </style>
 </head>
 <body>
   <h2>📌 QR Absensi Real-time</h2>
   <div id="qrcode"></div>
-  <div class="info" id="tokenInfo"></div>
+  <div id="info"></div>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzt6BgDOaKuMpj1Uvz5ZaIzFg8sTUiZ0q2QfACnadrOeK7Y0M866F-E8LTnyLrnk0w/exec";
-    const TYPE = "masuk"; // bisa diganti "pulang" kalau untuk absen pulang
+    const GAS_URL = "https://script.google.com/macros/s/AKfycb.../exec";
+    const TYPE = "masuk"; // ganti "pulang" untuk absen pulang
 
-    function updateQRCode() {
-      fetch(GAS_URL + "?mode=token")
-        .then(res => res.text())
-        .then(token => {
-          const absensiUrl = `${GAS_URL}?token=${token}&type=${TYPE}`;
-          
-          // render QR
-          document.getElementById("qrcode").innerHTML = "";
-          new QRCode(document.getElementById("qrcode"), {
-            text: absensiUrl,
-            width: 200,
-            height: 200
-          });
+    async function updateQR() {
+      try {
+        const res = await fetch(GAS_URL + "?mode=token");
+        const token = await res.text();
 
-          // info token
-          const now = new Date().toLocaleTimeString();
-          document.getElementById("tokenInfo").innerText = 
-            `Token: ${token} | Update: ${now}`;
-        })
-        .catch(err => {
-          console.error("Gagal ambil token", err);
+        const absensiUrl = `${GAS_URL}?token=${token}&type=${TYPE}`;
+        
+        // bikin QR baru
+        document.getElementById("qrcode").innerHTML = "";
+        new QRCode(document.getElementById("qrcode"), {
+          text: absensiUrl,
+          width: 200,
+          height: 200
         });
+
+        document.getElementById("info").innerText =
+          `Token: ${token} | Update: ${new Date().toLocaleTimeString()}`;
+      } catch (err) {
+        console.error("Gagal ambil token", err);
+      }
     }
 
-    // update pertama kali
-    updateQRCode();
-
-    // update setiap 5 detik
-    setInterval(updateQRCode, 5000);
+    updateQR();
+    setInterval(updateQR, 5000); // update tiap 5 detik
   </script>
 </body>
 </html>
