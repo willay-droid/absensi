@@ -7,38 +7,37 @@
   <style>
     body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
     #qrcode { margin: 20px auto; }
-    #info { margin-top: 10px; font-size: 16px; }
+    .token { font-size: 20px; margin-top: 10px; }
   </style>
 </head>
 <body>
   <h2>📌 QR Absensi Real-time</h2>
   <div id="qrcode"></div>
-  <div id="info"></div>
+  <div class="token">Token: <span id="token"></span></div>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycb.../exec";
-    const TYPE = "masuk"; // ganti "pulang" untuk absen pulang
+    const GAS_URL = "https://script.google.com/macros/s/AKfycb.../exec"; // ganti URL GAS lo
 
-    async function updateQR() {
-      try {
-        const res = await fetch(GAS_URL + "?mode=token");
-        const token = await res.text();
+    function generateToken() {
+      const now = Date.now();
+      const slice = Math.floor(now / 5000); // ganti token tiap 5 detik
+      const base = btoa("MySecret2025" + slice);
+      return base.replace(/[^A-Z0-9]/gi, "").substring(0, 8);
+    }
 
-        const absensiUrl = `${GAS_URL}?token=${token}&type=${TYPE}`;
-        
-        // bikin QR baru
-        document.getElementById("qrcode").innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), {
-          text: absensiUrl,
-          width: 200,
-          height: 200
-        });
+    function updateQR() {
+      const token = generateToken();
+      document.getElementById("token").textContent = token;
 
-        document.getElementById("info").innerText =
-          `Token: ${token} | Update: ${new Date().toLocaleTimeString()}`;
-      } catch (err) {
-        console.error("Gagal ambil token", err);
-      }
+      // hapus QR lama
+      document.getElementById("qrcode").innerHTML = "";
+
+      // buat QR baru (isi link ke GAS + token)
+      new QRCode(document.getElementById("qrcode"), {
+        text: `${GAS_URL}?token=${token}&type=masuk`,
+        width: 200,
+        height: 200
+      });
     }
 
     updateQR();
