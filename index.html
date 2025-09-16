@@ -3,123 +3,147 @@
 <head>
   <meta charset="UTF-8">
   <title>QR Absensi Real-time</title>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
+      background: #f7f7f7;
       text-align: center;
-      background: #f5f5f5;
-      margin: 0;
       padding: 20px;
     }
-    h1 { margin-bottom: 10px; }
-    #clock { font-size: 18px; margin-bottom: 20px; font-weight: bold; }
-    .section {
-      display: inline-block;
-      margin: 20px;
+    h1 { color: #222; }
+    .datetime {
+      font-size: 18px;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+    .qr-container {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .qr-card {
+      transition: all 0.4s ease;
+      text-align: center;
       padding: 20px;
       border-radius: 12px;
-      background: white;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      background: #fff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      width: 280px;
     }
-    canvas { margin: 10px auto; display: block; }
-    .token { font-size: 14px; color: #333; margin-top: 5px; }
-    button {
+    .qr-active {
+      transform: scale(1.1);
+      filter: none;
+      opacity: 1;
+    }
+    .qr-disabled {
+      transform: scale(0.8);
+      filter: blur(8px) brightness(0.8);
+      opacity: 0.6;
+    }
+    .qr-code {
+      margin: 10px auto;
+      width: 200px;
+      height: 200px;
+    }
+    .token-text {
       margin-top: 10px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #333;
+    }
+    button {
       padding: 8px 16px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
       font-size: 14px;
+      margin-top: 10px;
     }
-    .on { background: green; color: white; }
-    .off { background: gray; color: white; }
+    .enable { background: #28a745; color: #fff; }
+    .disable { background: #dc3545; color: #fff; }
   </style>
 </head>
 <body>
   <h1>📌 QR Absensi Real-time</h1>
-  <div id="clock">Loading time...</div>
+  <div class="datetime" id="datetime"></div>
 
-  <div class="section" id="masukSection">
-    <h2>QR Absensi Masuk</h2>
-    <canvas id="qrMasuk"></canvas>
-    <div class="token" id="tokenMasuk">Token: -</div>
-    <button id="toggleMasuk" class="on">Disable</button>
-  </div>
+  <div class="qr-container">
+    <!-- QR Masuk -->
+    <div class="qr-card qr-active" id="qrMasukCard">
+      <h3>QR Absensi Masuk</h3>
+      <div id="qrMasuk" class="qr-code"></div>
+      <div class="token-text" id="tokenMasuk">Token: -</div>
+      <button class="disable" onclick="toggleQR('masuk')">Disable</button>
+    </div>
 
-  <div class="section" id="pulangSection">
-    <h2>QR Absensi Pulang</h2>
-    <canvas id="qrPulang"></canvas>
-    <div class="token" id="tokenPulang">Token: -</div>
-    <button id="togglePulang" class="off">Enable</button>
+    <!-- QR Pulang -->
+    <div class="qr-card qr-disabled" id="qrPulangCard">
+      <h3>QR Absensi Pulang</h3>
+      <div id="qrPulang" class="qr-code"></div>
+      <div class="token-text" id="tokenPulang">Token: -</div>
+      <button class="enable" onclick="toggleQR('pulang')">Enable</button>
+    </div>
   </div>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzt6BgDOaKuMpj1Uvz5ZaIzFg8sTUiZ0q2QfACnadrOeK7Y0M866F-E8LTnyLrnk0w/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbziNLe_I7EDIK_N93jpS-jLDNYVc2whHcjkyiv_qllDeRa8xkLs0aDQbenIvWUzL5Y-8A/exec"; // ganti dengan URL GAS lo
 
-    let enableMasuk = true;
-    let enablePulang = false;
+    let activeQR = "masuk"; // default aktif = masuk
+    let qrMasuk, qrPulang;
 
-    function updateClock() {
+    function updateDateTime() {
       const now = new Date();
       const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      document.getElementById("clock").innerText =
-        now.toLocaleDateString("id-ID", options) + " " +
-        now.toLocaleTimeString("id-ID");
+      const date = now.toLocaleDateString('id-ID', options);
+      const time = now.toLocaleTimeString('id-ID');
+      document.getElementById("datetime").innerText = `${date} ${time}`;
     }
-    setInterval(updateClock, 1000);
-    updateClock();
 
     function generateToken() {
       return Math.random().toString(36).substring(2, 10).toUpperCase();
     }
 
-    function updateQR() {
+    function refreshQR() {
       const token = generateToken();
-      const time = new Date().toLocaleTimeString("id-ID");
 
-      if (enableMasuk) {
-        const urlMasuk = `${GAS_URL}?type=masuk&token=${token}&time=${encodeURIComponent(time)}`;
-        QRCode.toCanvas(document.getElementById("qrMasuk"), urlMasuk);
-        document.getElementById("tokenMasuk").innerText = "Token: " + token;
+      if (activeQR === "masuk") {
+        qrMasuk.clear();
+        qrMasuk.makeCode(`${GAS_URL}?type=masuk&token=${token}`);
+        document.getElementById("tokenMasuk").innerText = `Token: ${token}`;
+        document.getElementById("tokenPulang").innerText = "Token: - (Disabled)";
       } else {
-        QRCode.toCanvas(document.getElementById("qrMasuk"), "DISABLED");
+        qrPulang.clear();
+        qrPulang.makeCode(`${GAS_URL}?type=pulang&token=${token}`);
+        document.getElementById("tokenPulang").innerText = `Token: ${token}`;
         document.getElementById("tokenMasuk").innerText = "Token: - (Disabled)";
       }
+    }
 
-      if (enablePulang) {
-        const urlPulang = `${GAS_URL}?type=pulang&token=${token}&time=${encodeURIComponent(time)}`;
-        QRCode.toCanvas(document.getElementById("qrPulang"), urlPulang);
-        document.getElementById("tokenPulang").innerText = "Token: " + token;
+    function toggleQR(type) {
+      activeQR = type;
+      if (type === "masuk") {
+        document.getElementById("qrMasukCard").classList.add("qr-active");
+        document.getElementById("qrMasukCard").classList.remove("qr-disabled");
+        document.getElementById("qrPulangCard").classList.add("qr-disabled");
+        document.getElementById("qrPulangCard").classList.remove("qr-active");
       } else {
-        QRCode.toCanvas(document.getElementById("qrPulang"), "DISABLED");
-        document.getElementById("tokenPulang").innerText = "Token: - (Disabled)";
+        document.getElementById("qrPulangCard").classList.add("qr-active");
+        document.getElementById("qrPulangCard").classList.remove("qr-disabled");
+        document.getElementById("qrMasukCard").classList.add("qr-disabled");
+        document.getElementById("qrMasukCard").classList.remove("qr-active");
       }
+      refreshQR();
     }
-    setInterval(updateQR, 5000);
-    updateQR();
 
-    document.getElementById("toggleMasuk").addEventListener("click", () => {
-      enableMasuk = !enableMasuk;
-      enablePulang = !enableMasuk;
-      updateQR();
-      updateButtons();
-    });
-
-    document.getElementById("togglePulang").addEventListener("click", () => {
-      enablePulang = !enablePulang;
-      enableMasuk = !enablePulang;
-      updateQR();
-      updateButtons();
-    });
-
-    function updateButtons() {
-      document.getElementById("toggleMasuk").innerText = enableMasuk ? "Disable" : "Enable";
-      document.getElementById("toggleMasuk").className = enableMasuk ? "on" : "off";
-      document.getElementById("togglePulang").innerText = enablePulang ? "Disable" : "Enable";
-      document.getElementById("togglePulang").className = enablePulang ? "on" : "off";
+    window.onload = () => {
+      qrMasuk = new QRCode(document.getElementById("qrMasuk"), { width: 200, height: 200 });
+      qrPulang = new QRCode(document.getElementById("qrPulang"), { width: 200, height: 200 });
+      refreshQR();
+      setInterval(updateDateTime, 1000);
+      setInterval(refreshQR, 30000); // update QR tiap 30 detik
     }
-    updateButtons();
   </script>
 </body>
 </html>
