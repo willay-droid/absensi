@@ -3,145 +3,123 @@
 <head>
   <meta charset="UTF-8">
   <title>QR Absensi Real-time</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      background: #f4f6f9;
+      background: #f5f5f5;
+      margin: 0;
       padding: 20px;
     }
-    h1 {
-      color: #333;
-    }
-    .time {
-      font-size: 18px;
-      margin: 10px 0;
-      color: #444;
-    }
-    .qr-section {
-      margin: 20px auto;
-      padding: 20px;
-      border-radius: 10px;
-      background: white;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    h1 { margin-bottom: 10px; }
+    #clock { font-size: 18px; margin-bottom: 20px; font-weight: bold; }
+    .section {
       display: inline-block;
+      margin: 20px;
+      padding: 20px;
+      border-radius: 12px;
+      background: white;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
     }
-    .qr-title {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-    .token {
-      font-size: 14px;
-      color: #666;
-      margin-top: 10px;
-    }
+    canvas { margin: 10px auto; display: block; }
+    .token { font-size: 14px; color: #333; margin-top: 5px; }
     button {
-      margin: 10px;
-      padding: 10px 20px;
+      margin-top: 10px;
+      padding: 8px 16px;
       border: none;
       border-radius: 6px;
-      font-size: 14px;
       cursor: pointer;
+      font-size: 14px;
     }
-    .enable {
-      background: #4caf50;
-      color: white;
-    }
-    .disable {
-      background: #f44336;
-      color: white;
-    }
-    canvas {
-      margin: 10px 0;
-    }
+    .on { background: green; color: white; }
+    .off { background: gray; color: white; }
   </style>
 </head>
 <body>
   <h1>📌 QR Absensi Real-time</h1>
-  <div class="time" id="datetime"></div>
+  <div id="clock">Loading time...</div>
 
-  <!-- Absensi Masuk -->
-  <div class="qr-section" id="section-masuk">
-    <div class="qr-title">QR Absensi Masuk</div>
+  <div class="section" id="masukSection">
+    <h2>QR Absensi Masuk</h2>
     <canvas id="qrMasuk"></canvas>
-    <div class="token" id="tokenMasuk"></div>
-    <button class="enable" onclick="enableQR('masuk')">Enable</button>
-    <button class="disable" onclick="disableQR('masuk')">Disable</button>
+    <div class="token" id="tokenMasuk">Token: -</div>
+    <button id="toggleMasuk" class="on">Disable</button>
   </div>
 
-  <!-- Absensi Pulang -->
-  <div class="qr-section" id="section-pulang">
-    <div class="qr-title">QR Absensi Pulang</div>
+  <div class="section" id="pulangSection">
+    <h2>QR Absensi Pulang</h2>
     <canvas id="qrPulang"></canvas>
-    <div class="token" id="tokenPulang"></div>
-    <button class="enable" onclick="enableQR('pulang')">Enable</button>
-    <button class="disable" onclick="disableQR('pulang')">Disable</button>
+    <div class="token" id="tokenPulang">Token: -</div>
+    <button id="togglePulang" class="off">Enable</button>
   </div>
 
-  <!-- QRCode JS -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
   <script>
-    // ================== CONFIG ==================
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbznzZHudAPMYwui30ezzqKoLgX6EJo3RgZEWpIFuCl8VTfujL5e_bFt0MBFwGOAGjg3/exec";
-    let activeQR = "masuk"; // default aktif masuk
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzt6BgDOaKuMpj1Uvz5ZaIzFg8sTUiZ0q2QfACnadrOeK7Y0M866F-E8LTnyLrnk0w/exec";
 
-    const qrMasuk = new QRious({ element: document.getElementById("qrMasuk"), size: 200 });
-    const qrPulang = new QRious({ element: document.getElementById("qrPulang"), size: 200 });
+    let enableMasuk = true;
+    let enablePulang = false;
 
-    // ================== TIME ==================
-    function updateTime() {
+    function updateClock() {
       const now = new Date();
       const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      document.getElementById("datetime").innerText =
-        now.toLocaleDateString("id-ID", options) + " | " + now.toLocaleTimeString("id-ID");
+      document.getElementById("clock").innerText =
+        now.toLocaleDateString("id-ID", options) + " " +
+        now.toLocaleTimeString("id-ID");
     }
-    setInterval(updateTime, 1000);
-    updateTime();
+    setInterval(updateClock, 1000);
+    updateClock();
 
-    // ================== TOKEN ==================
     function generateToken() {
       return Math.random().toString(36).substring(2, 10).toUpperCase();
     }
 
     function updateQR() {
       const token = generateToken();
-      const jam = new Date().toLocaleTimeString("id-ID");
+      const time = new Date().toLocaleTimeString("id-ID");
 
-      if (activeQR === "masuk") {
-        const url = `${GAS_URL}?type=masuk&token=${token}`;
-        qrMasuk.value = url;
+      if (enableMasuk) {
+        const urlMasuk = `${GAS_URL}?type=masuk&token=${token}&time=${encodeURIComponent(time)}`;
+        QRCode.toCanvas(document.getElementById("qrMasuk"), urlMasuk);
         document.getElementById("tokenMasuk").innerText = "Token: " + token;
-        qrPulang.value = "DISABLED";
-        document.getElementById("tokenPulang").innerText = "Token: - (Disabled)";
       } else {
-        const url = `${GAS_URL}?type=pulang&token=${token}`;
-        qrPulang.value = url;
-        document.getElementById("tokenPulang").innerText = "Token: " + token;
-        qrMasuk.value = "DISABLED";
+        QRCode.toCanvas(document.getElementById("qrMasuk"), "DISABLED");
         document.getElementById("tokenMasuk").innerText = "Token: - (Disabled)";
       }
-    }
-    setInterval(updateQR, 5000); // ganti token tiap 5 detik
-    updateQR();
 
-    // ================== ENABLE/DISABLE ==================
-    function enableQR(type) {
-      activeQR = type;
-      updateQR();
-    }
-    function disableQR(type) {
-      if (activeQR === type) {
-        activeQR = null;
-        if (type === "masuk") {
-          qrMasuk.value = "DISABLED";
-          document.getElementById("tokenMasuk").innerText = "Token: - (Disabled)";
-        } else {
-          qrPulang.value = "DISABLED";
-          document.getElementById("tokenPulang").innerText = "Token: - (Disabled)";
-        }
+      if (enablePulang) {
+        const urlPulang = `${GAS_URL}?type=pulang&token=${token}&time=${encodeURIComponent(time)}`;
+        QRCode.toCanvas(document.getElementById("qrPulang"), urlPulang);
+        document.getElementById("tokenPulang").innerText = "Token: " + token;
+      } else {
+        QRCode.toCanvas(document.getElementById("qrPulang"), "DISABLED");
+        document.getElementById("tokenPulang").innerText = "Token: - (Disabled)";
       }
     }
+    setInterval(updateQR, 5000);
+    updateQR();
+
+    document.getElementById("toggleMasuk").addEventListener("click", () => {
+      enableMasuk = !enableMasuk;
+      enablePulang = !enableMasuk;
+      updateQR();
+      updateButtons();
+    });
+
+    document.getElementById("togglePulang").addEventListener("click", () => {
+      enablePulang = !enablePulang;
+      enableMasuk = !enablePulang;
+      updateQR();
+      updateButtons();
+    });
+
+    function updateButtons() {
+      document.getElementById("toggleMasuk").innerText = enableMasuk ? "Disable" : "Enable";
+      document.getElementById("toggleMasuk").className = enableMasuk ? "on" : "off";
+      document.getElementById("togglePulang").innerText = enablePulang ? "Disable" : "Enable";
+      document.getElementById("togglePulang").className = enablePulang ? "on" : "off";
+    }
+    updateButtons();
   </script>
 </body>
 </html>
