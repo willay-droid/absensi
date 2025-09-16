@@ -2,51 +2,61 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Absensi Berhasil</title>
+  <title>✅ Absensi Berhasil</title>
   <style>
     body {
+      background: #e8f5e9;
       font-family: Arial, sans-serif;
       text-align: center;
-      padding: 50px;
-      background: #f9f9f9;
+      padding-top: 100px;
     }
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
+    .box {
       display: inline-block;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      background: white;
+      border: 2px solid #4caf50;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
-    h2 { color: green; }
-    .type { font-size: 18px; margin-top: 10px; }
+    h1 {
+      color: #4caf50;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 16px;
+      color: #333;
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h2>✅ Absensi Berhasil</h2>
-    <p id="info"></p>
+  <div class="box">
+    <h1 id="title">✅ Absensi Berhasil</h1>
+    <p id="message"></p>
+    <p id="time"></p>
   </div>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const type = params.get("type") || "unknown";
-    const time = params.get("time") || "-";
-    const status = params.get("status") || "Hadir";
+    // ambil query param dari URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const type = urlParams.get("type") || "masuk"; // default masuk
+    const nama = urlParams.get("nama") || "Karyawan";
+    const unit = urlParams.get("unit") || "-";
+    const jam  = urlParams.get("jam")  || new Date().toLocaleTimeString();
 
-    let jenisText = "";
-    if (type === "masuk") {
-      jenisText = "Anda telah melakukan <b>Absen Masuk</b>";
-    } else if (type === "pulang") {
-      jenisText = "Anda telah melakukan <b>Absen Pulang</b>";
+    // ubah teks berdasarkan type
+    const title = document.getElementById("title");
+    const message = document.getElementById("message");
+    const time = document.getElementById("time");
+
+    if (type === "pulang") {
+      title.innerText = "✅ Absensi Pulang Berhasil";
+      message.innerText = `Terima kasih, ${nama} dari ${unit}.`;
     } else {
-      jenisText = "Jenis absensi tidak diketahui.";
+      title.innerText = "✅ Absensi Masuk Berhasil";
+      message.innerText = `Selamat bekerja, ${nama} dari ${unit}.`;
     }
 
-    document.getElementById("info").innerHTML = `
-      ${jenisText}<br>
-      Waktu: <b>${time}</b><br>
-      Status: <b>${status}</b>
-    `;
+    time.innerText = `Waktu: ${jam}`;
   </script>
 </body>
 </html>
