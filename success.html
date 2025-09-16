@@ -2,51 +2,40 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Absensi Berhasil</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 50px;
-      background: #f9f9f9;
-    }
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      display: inline-block;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    h2 { color: green; }
-    .type { font-size: 18px; margin-top: 10px; }
-  </style>
+  <title>Absensi</title>
 </head>
 <body>
-  <div class="card">
-    <h2>✅ Absensi Berhasil</h2>
-    <p id="info"></p>
-  </div>
+  <h2>Form Absensi</h2>
+  <form id="absenForm">
+    <label>NIK:</label><br>
+    <input type="text" id="nik" required><br><br>
+    <label>Nama Lengkap:</label><br>
+    <input type="text" id="nama" required><br><br>
+    <label>Unit:</label><br>
+    <input type="text" id="unit" required><br><br>
+    <input type="hidden" id="type" value="masuk">
+    <button type="submit">Absen</button>
+  </form>
+
+  <div id="result"></div>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const type = params.get("type") || "unknown";
-    const time = params.get("time") || "-";
-    const status = params.get("status") || "Hadir";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzhW_w2aKEmHKaUvkdDkUl3W_8VU6RrGUZHqQB1B5Z8LHyPpdHJda1xNv_dxBonJ_QsJQ/exec";
 
-    let jenisText = "";
-    if (type === "masuk") {
-      jenisText = "Anda telah melakukan <b>Absen Masuk</b>";
-    } else if (type === "pulang") {
-      jenisText = "Anda telah melakukan <b>Absen Pulang</b>";
-    } else {
-      jenisText = "Jenis absensi tidak diketahui.";
-    }
+    document.getElementById("absenForm").addEventListener("submit", function(e) {
+      e.preventDefault();
 
-    document.getElementById("info").innerHTML = `
-      ${jenisText}<br>
-      Waktu: <b>${time}</b><br>
-      Status: <b>${status}</b>
-    `;
+      const nik = document.getElementById("nik").value;
+      const nama = document.getElementById("nama").value;
+      const unit = document.getElementById("unit").value;
+      const type = document.getElementById("type").value;
+      const ua = navigator.userAgent;
+
+      fetch(`${GAS_URL}?nik=${encodeURIComponent(nik)}&nama=${encodeURIComponent(nama)}&unit=${encodeURIComponent(unit)}&type=${encodeURIComponent(type)}&ua=${encodeURIComponent(ua)}`)
+        .then(res => res.text())
+        .then(txt => document.getElementById("result").innerHTML = txt)
+        .catch(err => document.getElementById("result").innerHTML = "❌ Error: " + err);
+    });
   </script>
 </body>
 </html>
